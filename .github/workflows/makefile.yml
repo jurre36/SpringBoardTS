@@ -1,49 +1,22 @@
-name: Build
+ARCHS := arm64
+PACKAGE_FORMAT := ipa
+TARGET := iphone:clang:latest:15.0
+include $(THEOS)/makefiles/common.mk
 
-on:
-  push:
-  workflow_dispatch:
+TWEAK_NAME = SpringBoardTweak
+SpringBoardTweak_FILES = Tweak.x
+SpringBoardTweak_CFLAGS = -fobjc-arc
+SpringBoardTweak_INSTALL_PATH = /Applications/SpringBoardTS.app
+SpringBoardTweak_FRAMEWORKS = UIKit
+SpringBoardTweak_PRIVATE_FRAMEWORKS = CommonUtilities UIKitServices WatchdogClient
+# CommonUtilities UIKitServices SpringBoard ToneLibrary WatchdogClient
+include $(THEOS_MAKE_PATH)/tweak.mk
 
-jobs:
-  build:
-    name: Build
-    runs-on: macos-latest
+APPLICATION_NAME = SpringBoardTS
+$(APPLICATION_NAME)_FRAMEWORKS = CydiaSubstrate
+# $(APPLICATION_NAME)_PRIVATE_FRAMEWORKS = ChronoServices FrontBoard
+$(APPLICATION_NAME)_FILES = main.m InternalHook.x
+$(APPLICATION_NAME)_CFLAGS = -fcommon -fobjc-arc -Wno-error
+$(APPLICATION_NAME)_CODESIGN_FLAGS = -Sentitlements.plist -Icom.apple.springboardts
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@main
-
-      - name: Checkout theos/theos
-        uses: actions/checkout@main
-        with:
-          repository: theos/theos
-          ref: master
-          submodules: recursive
-          path: theos
-
-      - name: Checkout theos/sdks
-        uses: actions/checkout@main
-        with:
-          repository: theos/sdks
-          ref: master
-          sparse-checkout: iPhoneOS16.5.sdk
-          path: theos/sdks
-
-      - name: Ensure main utils are installed
-        uses: dhinakg/procursus-action@main
-        with:
-          packages: coreutils make xz ldid
-          
-      - name: Build
-        run: |
-          export THEOS=theos
-
-          git submodule update --init
-          bash get_libraries.sh
-          gmake package FINALPACKAGE=1 STRIP=0
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@main
-        with:
-          name: artifact
-          path: packages/*.ipa
+include $(THEOS_MAKE_PATH)/application.mk
