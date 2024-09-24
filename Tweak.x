@@ -70,7 +70,7 @@ kern_return_t bootstrap_check_in(mach_port_t bp, const name_t service_name, mach
     return 0; // regardless of errors
 }
 
-%hookf(xpc_connection_t, xpc_connection_create_mach_service, const char *name, dispatch_queue_t targetq, uint64_t flags) {
+%hookf(xpc_connection_t, const char *name, dispatch_queue_t targetq, uint64_t flags) {
     NSLog(@"xpc_connection_create_mach_service(%s, %@, %llu)", name, targetq, flags);
     if (flags == XPC_CONNECTION_MACH_SERVICE_LISTENER) {
 #if 0
